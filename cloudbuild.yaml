@@ -1,0 +1,20 @@
+steps:
+# Run unit tests
+# EXPERIMENT: load salesforce docker image and execute a command in it.
+- name: 'salesforce/salesforcedx'
+  args: ['sfdx', 'force:doc:commands:list']
+# Run unit test
+- name: python:3.7
+  args: ["python","-m","unittest","discover","-p","*_test.py"]
+  id: unittest
+# Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/trigger-test-1', '.']
+# Push the image to Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/trigger-test-1']
+# Deploy image to Cloud Run
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['beta', 'run', 'deploy', 'hello', '--image', 'gcr.io/$PROJECT_ID/trigger-test-1', '--region', 'us-central1', '--platform', 'managed', '--allow-unauthenticated']
+images:
+- gcr.io/$PROJECT_ID/trigger-test-1
